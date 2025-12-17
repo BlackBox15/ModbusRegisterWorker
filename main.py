@@ -6,6 +6,7 @@ from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
 from typing import Dict, List, Tuple, Any, Optional
 import logging
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -95,9 +96,10 @@ class ModbusMaster:
 
 def print_menu():
     print("\nAvailable commands:")
-    print("  read [address] [count] [slave] - Read data")
+    print("  read [address] [count] [slave = 1] - Read data")
     # print("  read [type] [address] [count] [slave] - Read data")
-    print("  write [address] [value] [slave] - Write data")
+    print("  write [address] [value] [slave = 1] - Write data")
+    print("  many [address] [value] [count] [delay = 0] [slave = 1] - [Experimental] write multiple values use 0x06 command")
     # print("  write [type] [address] [value] [slave] - Write data")
     print("  scan [start] [end] - Scan for devices")
     # print("  config - Read multiple addresses from config")
@@ -152,7 +154,6 @@ def main():
                     print("  No devices found")
 
             elif command[0] == 'read' and len(command) >= 3:
-                # read_type = command[1]
                 address = int(command[1])
                 count = int(command[2])
                 slave_id = int(command[3]) if len(command) > 3 else 1
@@ -160,27 +161,28 @@ def main():
                 result = master.read_holding_registers(address, count, slave_id)
                 print(f"Holding Registers [{address}:{address + count - 1}]: {result}")
 
-                # if read_type == 'coil':
-                #     result = master.read_coils(address, count, slave_id)
-                #     print(f"Coils [{address}:{address + count - 1}]: {result}")
-                # elif read_type == 'discrete':
-                #     result = master.read_discrete_inputs(address, count, slave_id)
-                #     print(f"Discrete Inputs [{address}:{address + count - 1}]: {result}")
-                # elif read_type == 'holding':
-                #     result = master.read_holding_registers(address, count, slave_id)
-                #     print(f"Holding Registers [{address}:{address + count - 1}]: {result}")
-                # elif read_type == 'input':
-                #     result = master.read_input_registers(address, count, slave_id)
-                #     print(f"Input Registers [{address}:{address + count - 1}]: {result}")
             elif command[0] == 'write' and len(command) >= 3:
-                # write_type = command[1]
                 address = int(command[1])
-                value = command[2]
+                int_value = int(command[2])
                 slave_id = int(command[3]) if len(command) > 3 else 1
 
-                int_value = int(value)
                 success = master.write_register(address, int_value, slave_id)
                 print(f"Write register {address}: {'Success' if success else 'Failed'}")
+
+            elif command[0] == 'many' and len(command) >= 4:
+                address = int(command[1])
+                int_value = int(command[2])
+                count = int(command[3])
+                delay = float(command[4]) if len(command) > 4 else 0
+                slave_id = int(command[5]) if len(command) > 5 else 1
+                successes = [0] * count
+
+                for i in range(count):
+                    successes[i] = master.write_register(address, int_value, slave_id)
+                    time.sleep(delay)
+                    address += 1
+                    print(f"Write register {address}: {'Success' if successes[i] else 'Failed'}")
+
             else:
                 print("Invalid command.")
 
