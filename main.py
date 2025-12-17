@@ -3,6 +3,8 @@
 #     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 from pymodbus.client import ModbusTcpClient
+from pymodbus.exceptions import ModbusException
+from typing import Dict, List, Tuple, Any, Optional
 import logging
 
 logging.basicConfig(
@@ -11,7 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def input_data():
+def input_connection_parameters():
     host = '127.0.0.1'
     port = 502
     host_string = input("Please enter the host address (127.0.0.1): ")
@@ -47,11 +49,25 @@ class ModbusMaster:
             self.is_connected = False
             logger.info("Disconnected from Modbus server")
 
+    def read_holding_registers(self, address: int, count: int = 1, slave_id: int = 1) -> List[int]:
+        try:
+            response = self.client.read_holding_registers(address, count = count, device_id = slave_id)
+            if not response.isError():
+                return list(response.registers)
+            else:
+                logger.error(f"Error reading holding registers at address {address}")
+                return []
+        except ModbusException as e:
+            logger.error(f"Modbus exception reading holding registers: {e}")
+            return []
 
-
-
-
-
+    def write_register(self, address: int, value: int, slave_id: int = 1) -> bool:
+        try:
+            response = self.client.write_register(address, value, device_id = slave_id)
+            return not response.isError()
+        except ModbusException as e:
+            logger.error(f"Modbus exception writing register: {e}")
+            return False
 
 if __name__ == '__main__':
-    input_data()
+    input_connection_parameters()
