@@ -3,7 +3,7 @@
 #     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 from pymodbus.client import ModbusTcpClient
-from pymodbus.exceptions import ModbusException
+import pymodbus.exceptions
 from typing import Dict, List, Tuple, Any, Optional
 import logging
 import time
@@ -82,7 +82,7 @@ class ModbusMaster:
             else:
                 logger.error(f"Error reading holding registers at address {address}")
                 return []
-        except ModbusException as e:
+        except pymodbus.ModbusException as e:
             logger.error(f"Modbus exception reading holding registers: {e}")
             return []
 
@@ -90,7 +90,7 @@ class ModbusMaster:
         try:
             response = self.client.write_register(address, value, device_id = slave_id)
             return not response.isError()
-        except ModbusException as e:
+        except pymodbus.ModbusException as e:
             logger.error(f"Modbus exception writing register: {e}")
             return False
 
