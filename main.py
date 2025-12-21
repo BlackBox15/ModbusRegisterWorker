@@ -1,6 +1,3 @@
-# def print_hi(name):
-#     # Use a breakpoint in the code line below to debug your script.
-#     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 from pymodbus.client import ModbusTcpClient
 import pymodbus.exceptions
@@ -14,16 +11,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def input_connection_parameters():
-    host = '127.0.0.1'
-    port = 502
-    host_string = input("Please enter the host address (127.0.0.1): ")
-    if host_string != "":
-        host = host_string
-    port_string = input("Please enter the port number (502 as default): ")
-    if port_string != "":
-        port = int(port_string)
-
 class ModbusMaster:
     def __init__(self, host:str = '127.0.0.1', port:int = 502):
         self.host = host
@@ -36,13 +23,13 @@ class ModbusMaster:
         try:
             self.is_connected = self.client.connect()
             if self.is_connected:
-                pass
-                # logger.info(f"Connected to Modbus server at {self.host}:{self.port}")
+                # pass
+                logger.info(f"Connected to Modbus server at {self.host}:{self.port}")
             else:
-                pass
-                # logger.error(f"Failed to connect to {self.host}:{self.port}")
+                # pass
+                logger.error(f"Failed to connect to {self.host}:{self.port}")
             return self.is_connected
-        except Exception as e:
+        except pymodbus.exceptions.ModbusException as e:
             logger.error(f"Connection error: {e}")
             self.is_connected = False
             return False
@@ -56,20 +43,24 @@ class ModbusMaster:
     def scan_devices(self, start_id: int = 1, end_id: int = 247) -> Dict[int, bool]:
         devices = {}
 
-        # logger.info(f"Scanning for Modbus devices from ID {start_id} to {end_id}")
+        logger.info(f"Scanning for Modbus devices from ID {start_id} to {end_id}")
 
         for slave_id in range(start_id, end_id + 1):
             try:
                 # Try to read a single coil to check if device responds
                 response = self.client.read_coils(0, device_id = slave_id)
+                # response2 = self.client.diag_read_diagnostic_register(device_id=slave_id, no_response_expected=False)
+
+
                 if not response.isError():
                     devices[slave_id] = True
                     logger.info(f"Device found at slave ID {slave_id}")
                 else:
                     devices[slave_id] = False
-                    logger.info(f"Device found with Exception at slave ID {slave_id}")
-            except:
+                    # logger.info(f"Device found with Exception at slave ID {slave_id}")
+            except pymodbus.exceptions.ModbusException as e:
                 logger.info(f"Not found at slave ID {slave_id}")
+                logger.info(f"Connection error: {e}")
                 devices[slave_id] = False
 
         return devices
