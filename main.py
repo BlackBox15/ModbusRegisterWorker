@@ -135,9 +135,9 @@ def main():
     print(f"\nConnected to {host}:{port}")
 
     print_menu()
-    stop_event_for_thread = threading.Event()
-    thread1 = threading.Thread(target=task_read_coil, args=(master, stop_event_for_thread))
-    thread1.start()
+    # stop_event_for_thread = threading.Event()
+    # thread1 = threading.Thread(target=task_read_coil, args=(master, stop_event_for_thread))
+    # thread1.start()
 
     while True:
         try:
@@ -149,7 +149,7 @@ def main():
                 continue
 
             if command[0] == 'exit':
-                stop_event_for_thread.set()
+                # stop_event_for_thread.set()
                 break
             elif command[0] == 'help':
                 print_menu()
