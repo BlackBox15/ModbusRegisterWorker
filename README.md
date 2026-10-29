@@ -15,7 +15,10 @@
 #### Команда записи в регистр
 <img width="298" height="205" alt="image" src="https://github.com/user-attachments/assets/31fac6c9-44af-4006-ad6b-5f17dff38373" />
 
-...и сравнение реального значения в памяти GKR^
+...и сравнение реального значения в памяти ПЛК:
 
 <img width="562" height="390" alt="image" src="https://github.com/user-attachments/assets/2fbdeac1-fa97-4c65-babe-6639139e29f1" />
 
+#### Команда множественной записи
+
+<img width="202" height="126" alt="image" src="https://github.com/user-attachments/assets/28d9573f-8370-424d-9ff2-454a5d20bfda" />
