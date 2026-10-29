@@ -1,9 +1,11 @@
+from logging import exception
 
 from pymodbus.client import ModbusTcpClient
 import pymodbus.exceptions
 from typing import Dict, List, Tuple, Any, Optional
 import logging
 import time
+import threading
 
 logging.basicConfig(
     level=logging.INFO,
@@ -79,11 +81,24 @@ class ModbusMaster:
 
     def write_register(self, address: int, value: int, slave_id: int = 1) -> bool:
         try:
-            response = self.client.write_register(address, value, device_id = slave_id)
-            return not response.isError()
+            response = self.client.write_register(address, value, device_id = slave_id, no_response_expected=False)
+            return True
         except pymodbus.ModbusException as e:
             logger.error(f"Modbus exception writing register: {e}")
             return False
+
+    def read_coils(self, address: int, count: int = 1, slave_id: int = 1) -> List[bool]:
+        """Read coils (discrete outputs)"""
+        try:
+            response = self.client.read_coils(address, device_id=slave_id)
+            if not response.isError():
+                return [bool(bit) for bit in response.bits[:count]]
+            else:
+                logger.error(f"Error reading coils at address {address}")
+                return []
+        except pymodbus.ModbusException as e:
+            logger.error(f"Modbus exception reading coils: {e}")
+            return []
 
 def print_menu():
     print("\nAvailable commands:")
@@ -100,6 +115,10 @@ def print_menu():
     # print("\nTypes: holding")
     # print("\nTypes: coil, discrete, holding, input")
 
+def task_read_coil(mb_master: ModbusMaster, stop_event):
+    while not stop_event.is_set():
+        mb_master.read_coils(0)
+        # time.sleep()
 
 def main():
     print("ModbusRegisterWorker is here!")
@@ -114,16 +133,23 @@ def main():
         return
 
     print(f"\nConnected to {host}:{port}")
+
     print_menu()
+    stop_event_for_thread = threading.Event()
+    thread1 = threading.Thread(target=task_read_coil, args=(master, stop_event_for_thread))
+    thread1.start()
 
     while True:
         try:
             command = input("\n> ").strip().lower().split()
 
+            # master.read_coils(address=0)
+
             if not command:
                 continue
 
             if command[0] == 'exit':
+                stop_event_for_thread.set()
                 break
             elif command[0] == 'help':
                 print_menu()
@@ -178,6 +204,7 @@ def main():
                 print("Invalid command.")
 
         except KeyboardInterrupt:
+            thread1.join()
             print("\nExiting...")
             break
         except Exception as e:
